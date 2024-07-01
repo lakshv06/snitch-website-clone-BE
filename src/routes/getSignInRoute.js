@@ -1,5 +1,6 @@
 import express from "express";
 import pool from "../database.js";
+import bcrypt from "bcrypt";
 import authenticateToken from "../middleware/authenticateToken.js";
 
 const router = express.Router();
@@ -19,23 +20,28 @@ router.post("/", authenticateToken, async (req, res) => {
     const queryValues = [email];
 
     const result = await client.query(queryText, queryValues);
-    client.release();
 
     if (result.rows.length > 0) {
-      // Add your logic to verify the OTP and Password here.
-      // For example, you might check if the OTP matches a value stored in the database.
-      // And you would compare the password using bcrypt or a similar library.
+      const user = result.rows[0];
+      const hashedPassword = user.password;
 
-      // Assuming OTP and Password are verified
-      res.status(200).send({ message: "Login successful!" });
+      // OTP verification can be done by adding otp engine service
+
+      const passwordMatch = await bcrypt.compare(password, hashedPassword);
+
+      if (passwordMatch) {
+        res.status(200).send({ message: "Login successful!" });
+      } else {
+        res.status(401).send({ error: "Invalid password" });
+      }
     } else {
-      res
-        .status(404)
-        .send({
-          error:
-            "No account with this email exists. Please try signing up instead.",
-        });
+      res.status(404).send({
+        error:
+          "No account with this email exists. Please try signing up instead.",
+      });
     }
+
+    client.release();
   } catch (err) {
     console.error("Error during login", err);
     res.status(500).send({ error: "Internal Server Error" });
