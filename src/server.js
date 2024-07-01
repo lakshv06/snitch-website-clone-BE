@@ -2,6 +2,9 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from 'cors';
 import createUserRoute from './routes/createUser.js';
+import getLoginSessionRoute from './routes/getLoginSessionRoute.js'
+import getSignInRoute from './routes/getSignInRoute.js'
+import getSignOutRoute from './routes/getSignOutRoute.js'
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file
@@ -23,6 +26,12 @@ function startServer() {
   });
 
   app.use('/sign-up', createUserRoute);
+
+  app.use('/get-login-session', getLoginSessionRoute);
+
+  app.use('/sign-in', getSignInRoute);
+
+  app.use('/sign-out', getSignOutRoute);
 
   return app;
 }
