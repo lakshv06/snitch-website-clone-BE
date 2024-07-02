@@ -2,6 +2,7 @@ import express from "express";
 import pool from "../database.js";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { sendOtp } from "../otp-engine/otpengine.js";
 
 dotenv.config();
 
@@ -24,7 +25,15 @@ router.post('/', async (req, res) => {
 
     if (result.rows.length > 0) {
       const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
-      res.status(200).send({ token_response: token, email: email });
+
+      // Send OTP to user's email
+      const otpSent = sendOtp(email);
+
+      if (otpSent) {
+        res.status(200).send({ token_response: token, email: email, message: "OTP sent to email" });
+      } else {
+        res.status(500).send({ error: "Failed to send OTP" });
+      }
     } else {
       res.status(404).send({ error: "No account with this email exists. Please try signing up instead." });
     }

@@ -2,6 +2,7 @@ import express from "express";
 import pool from "../database.js";
 import bcrypt from "bcrypt";
 import authenticateToken from "../middleware/authenticateToken.js";
+import { verifyOtp } from "../otp-engine/otpengine.js";
 
 const router = express.Router();
 
@@ -25,8 +26,14 @@ router.post("/", authenticateToken, async (req, res) => {
       const user = result.rows[0];
       const hashedPassword = user.password;
 
-      // OTP verification can be done by adding otp engine service
+      // Verify OTP
+      const otpValid = verifyOtp(email, otp);
 
+      if (!otpValid) {
+        return res.status(401).send({ error: "Invalid OTP" });
+      }
+
+      // Verify Password
       const passwordMatch = await bcrypt.compare(password, hashedPassword);
 
       if (passwordMatch) {
